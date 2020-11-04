@@ -4,6 +4,10 @@
 
 #include "CaptureServiceImpl.h"
 
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+
 #include "CaptureResponseListener.h"
 #include "LinuxTracingHandler.h"
 #include "OrbitBase/Logging.h"
@@ -63,12 +67,20 @@ grpc::Status CaptureServiceImpl::Capture(
   LOG("Read CaptureRequest from Capture's gRPC stream: starting capture");
   tracing_handler.Start(std::move(*request.mutable_capture_options()));
 
+  {
+    LOG("Requesting Vulkan Layer To Writer!?");
+    std::ofstream layer_start_capture_file("/mnt/developer/orbit_layer_lock");
+    layer_start_capture_file << "lock" << std::endl;
+    layer_start_capture_file.close();
+  }
+
   // The client asks for the capture to be stopped by calling WritesDone.
   // At that point, this call to Read will return false.
   // In the meantime, it blocks if no message is received.
   while (reader_writer->Read(&request)) {
   }
   LOG("Client finished writing on Capture's gRPC stream: stopping capture");
+  std::remove("/mnt/developer/orbit_layer_lock");
   tracing_handler.Stop();
 
   LOG("Finished handling gRPC call to Capture: all capture data has been sent");

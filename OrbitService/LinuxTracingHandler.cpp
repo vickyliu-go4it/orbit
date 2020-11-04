@@ -4,7 +4,12 @@
 
 #include "LinuxTracingHandler.h"
 
+#include <OrbitBase/MakeUniqueForOverwrite.h>
+
 #include "absl/flags/flag.h"
+#include "google/protobuf/io/coded_stream.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "google/protobuf/message.h"
 #include "llvm/Demangle/Demangle.h"
 
 namespace orbit_service {
@@ -261,6 +266,22 @@ uint64_t LinuxTracingHandler::InternTracepointInfoIfNecessaryAndGetKey(
   return key;
 }
 
+bool ReadMessage(google::protobuf::Message* message,
+                 google::protobuf::io::CodedInputStream* input) {
+  uint32_t message_size;
+  if (!input->ReadLittleEndian32(&message_size)) {
+    return false;
+  }
+
+  std::unique_ptr<char[]> buffer = make_unique_for_overwrite<char[]>(message_size);
+  if (!input->ReadRaw(buffer.get(), message_size)) {
+    return false;
+  }
+  message->ParseFromArray(buffer.get(), message_size);
+
+  return true;
+}
+
 void LinuxTracingHandler::SenderThread() {
   pthread_setname_np(pthread_self(), "SenderThread");
   constexpr absl::Duration kSendTimeInterval = absl::Milliseconds(20);
@@ -281,6 +302,19 @@ void LinuxTracingHandler::SenderThread() {
                                             kSendTimeInterval);
     if (tracer_ == nullptr) {
       stopped = true;
+      // now read the vulkan layer result:
+      std::ifstream file("/mnt/developer/orbit_test_file", std::ios::binary);
+      if (file.good()) {
+        google::protobuf::io::IstreamInputStream input_stream(&file);
+        google::protobuf::io::CodedInputStream coded_input(&input_stream);
+
+        orbit_grpc_protos::GpuCommandBuffer command_buffer;
+        while (ReadMessage(&command_buffer, &coded_input)) {
+          CaptureEvent event;
+          event.mutable_gpu_command_buffer()->CopyFrom(command_buffer);
+          event_buffer_.emplace_back(std::move(event));
+        }
+      }
     }
     std::vector<CaptureEvent> buffered_events = std::move(event_buffer_);
     event_buffer_.clear();
