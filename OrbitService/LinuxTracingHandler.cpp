@@ -309,10 +309,10 @@ void LinuxTracingHandler::SenderThread() {
         google::protobuf::io::IstreamInputStream input_stream(&file);
         google::protobuf::io::CodedInputStream coded_input(&input_stream);
 
-        orbit_grpc_protos::GpuCommandBuffer command_buffer;
-        while (ReadMessage(&command_buffer, &coded_input)) {
+        orbit_grpc_protos::GpuQueueSubmisssion queue_submission;
+        while (ReadMessage(&queue_submission, &coded_input)) {
           CaptureEvent event;
-          event.mutable_gpu_command_buffer()->CopyFrom(command_buffer);
+          event.mutable_gpu_queue_submission()->CopyFrom(queue_submission);
           event_buffer_.emplace_back(std::move(event));
         }
 
