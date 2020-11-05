@@ -303,7 +303,8 @@ void LinuxTracingHandler::SenderThread() {
     if (tracer_ == nullptr) {
       stopped = true;
       // now read the vulkan layer result:
-      std::ifstream file("/mnt/developer/orbit_test_file", std::ios::binary);
+      const std::string file_name = "/mnt/developer/orbit_test_file";
+      std::ifstream file(file_name, std::ios::binary);
       if (file.good()) {
         google::protobuf::io::IstreamInputStream input_stream(&file);
         google::protobuf::io::CodedInputStream coded_input(&input_stream);
@@ -314,6 +315,9 @@ void LinuxTracingHandler::SenderThread() {
           event.mutable_gpu_command_buffer()->CopyFrom(command_buffer);
           event_buffer_.emplace_back(std::move(event));
         }
+
+        file.close();
+        std::remove(file_name.c_str());
       }
     }
     std::vector<CaptureEvent> buffered_events = std::move(event_buffer_);
