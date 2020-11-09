@@ -34,6 +34,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(WITH_ORBITGL "Setting this option will enable the OrbitGL component." ON)
 option(WITH_GUI "Setting this option will enable the Qt-based UI client." ON)
 option(WITH_CRASH_HANDLING "Setting this option will enable crash handling based on crashpad." ON)
+option(WITH_VULKAN_LAYER "TODO" OFF)
 
 set(CRASHDUMP_SERVER "" CACHE STRING "Setting this option will enable uploading crash dumps to the url specified.")
 
@@ -145,6 +146,9 @@ else()
   add_subdirectory(OrbitClientGgp)
   add_subdirectory(OrbitCaptureGgpClient)
   add_subdirectory(OrbitCaptureGgpService)
+endif()
+
+if(WITH_VULKAN_LAYER)
   add_subdirectory(OrbitVulkanLayer)
 endif()
 
