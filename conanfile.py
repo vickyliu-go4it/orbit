@@ -114,6 +114,8 @@ class OrbitConan(ConanFile):
             if not self.options.system_qt:
                 self.requires("qt/5.15.1@{}#e659e981368e4baba1a201b75ddb89b6".format(self._orbit_channel))
 
+        self.requires('vulkan-headers/1.2.154.0')
+
 
     def configure(self):
         if self.options.debian_packaging and (self.settings.get_safe("os.platform") != "GGP" or tools.detected_os() != "Linux"):
