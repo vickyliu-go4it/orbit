@@ -72,6 +72,26 @@ void OrbitSamplingReport::Initialize(DataView* callstack_data_view,
     QString threadName = QString::fromStdString(report_data_view.GetName());
     ui->tabWidget->addTab(tab, threadName);
   }
+
+  for (auto& senderTreeView : m_OrbitDataViews) {
+    for (auto& receiverTreeView : m_OrbitDataViews) {
+      connect(senderTreeView->GetTreeView()->selectionModel(),
+              &QItemSelectionModel::selectionChanged, receiverTreeView,
+              [senderTreeView, receiverTreeView]() {
+                auto index = senderTreeView->GetTreeView()->selectionModel()->currentIndex();
+                if (index.isValid() && !senderTreeView->GetTreeView()->is_internal_refresh() &&
+                    receiverTreeView != senderTreeView) {
+                  receiverTreeView->GetTreeView()->SetIsInternalRefresh(true);
+                  receiverTreeView->GetTreeView()->selectionModel()->select(
+                      index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                  receiverTreeView->GetTreeView()->SetIsInternalRefresh(false);
+                }
+              });
+    }
+  }
+
+  connect(ui->tabWidget, &QTabWidget::currentChanged, this,
+          &OrbitSamplingReport::OnTabCurrentChanged);
 }
 
 void OrbitSamplingReport::on_NextCallstackButton_clicked() {
@@ -84,6 +104,16 @@ void OrbitSamplingReport::on_PreviousCallstackButton_clicked() {
   CHECK(m_SamplingReport != nullptr);
   m_SamplingReport->DecrementCallstackIndex();
   RefreshCallstackView();
+}
+
+void OrbitSamplingReport::OnTabCurrentChanged(int current_tab_index) {
+  auto treeView = m_OrbitDataViews.at(current_tab_index);
+  auto index = treeView->GetTreeView()->selectionModel()->selectedIndexes();
+
+  if (index.front().isValid()) {
+    treeView->GetTreeView()->GetModel()->OnRowSelected(index.front().row());
+    RefreshCallstackView();
+  }
 }
 
 void OrbitSamplingReport::RefreshCallstackView() {

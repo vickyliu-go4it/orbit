@@ -80,8 +80,8 @@ void SamplingReport::OnSelectAddress(uint64_t address, ThreadID thread_id) {
     if (selected_address_ != address || selected_thread_id_ != thread_id) {
       selected_address_ = address;
       selected_thread_id_ = thread_id;
-      UpdateDisplayedCallstack();
     }
+    UpdateDisplayedCallstack();
   }
 
   if (ui_refresh_func_) {
