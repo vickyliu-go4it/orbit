@@ -71,6 +71,7 @@
 #include "SymbolHelper.h"
 #include "TextBox.h"
 #include "TracepointsDataView.h"
+#include "capture.pb.h"
 #include "capture_data.pb.h"
 #include "preset.pb.h"
 #include "services.pb.h"
@@ -138,6 +139,8 @@ class OrbitApp final : public DataViewFactory, public CaptureListener {
       TracepointInfoSet selected_tracepoints,
       absl::flat_hash_set<uint64_t> frame_track_function_ids) override;
   void OnTimer(const orbit_client_protos::TimerInfo& timer_info) override;
+  void OnSystemMemoryUsage(
+      const orbit_grpc_protos::SystemMemoryUsage& system_memory_usage) override;
   void OnKeyAndString(uint64_t key, std::string str) override;
   void OnUniqueCallStack(CallStack callstack) override;
   void OnCallstackEvent(orbit_client_protos::CallstackEvent callstack_event) override;

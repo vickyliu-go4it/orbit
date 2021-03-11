@@ -25,15 +25,27 @@ class GraphTrack : public Track {
  public:
   explicit GraphTrack(TimeGraph* time_graph, TimeGraphLayout* layout, std::string name,
                       const CaptureData* capture_data);
-  [[nodiscard]] Type GetType() const override { return kGraphTrack; }
-  void Draw(GlCanvas* canvas, PickingMode picking_mode, float z_offset = 0) override;
+  [[nodiscard]] Type GetType() const override {
+    return kGraphTrack;
+  } void Draw(GlCanvas* canvas, PickingMode picking_mode, float z_offset = 0) override;
   void UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t max_tick,
                         PickingMode picking_mode, float z_offset = 0) override;
   [[nodiscard]] float GetHeight() const override;
   void AddValue(double value, uint64_t time);
-  [[nodiscard]] std::optional<std::pair<uint64_t, double> > GetPreviousValueAndTime(
+  [[nodiscard]] std::optional<std::pair<uint64_t, double>> GetPreviousValueAndTime(
       uint64_t time) const;
   [[nodiscard]] bool IsEmpty() const override { return values_.empty(); }
+
+  void SetWarningThreshold(const std::optional<std::pair<std::string, double>>& warning_threshold) {
+    warning_threshold_ = warning_threshold;
+    max_ = std::max(max_, warning_threshold.value().second);
+    min_ = std::min(min_, warning_threshold.value().second);
+  }
+  void SetValueUpperBound(const std::optional<std::pair<std::string, double>>& value_upper_bound) {
+    value_upper_bound_ = value_upper_bound;
+  }
+  bool WarningThresholdSetHasValue() { return warning_threshold_.has_value(); }
+  bool ValueUpperBoundHasValue() { return value_upper_bound_.has_value(); }
 
  protected:
   void DrawSquareDot(Batcher* batcher, Vec2 center, float radius, float z, const Color& color);
@@ -44,6 +56,8 @@ class GraphTrack : public Track {
   double max_ = std::numeric_limits<double>::lowest();
   double value_range_ = 0;
   double inv_value_range_ = 0;
+  std::optional<std::pair<std::string, double>> warning_threshold_ = std::nullopt;
+  std::optional<std::pair<std::string, double>> value_upper_bound_ = std::nullopt;
 };
 
 #endif  // ORBIT_GL_GRAPH_TRACK_H_

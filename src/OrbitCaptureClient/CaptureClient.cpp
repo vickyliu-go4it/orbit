@@ -129,6 +129,9 @@ ErrorMessageOr<CaptureListener::CaptureOutcome> CaptureClient::CaptureSync(
     }
   }
 
+  capture_options->set_collect_memory_info(true);
+  capture_options->set_memory_sampling_period_ns(100'000'000);
+
   capture_options->set_trace_thread_state(collect_thread_state);
   capture_options->set_trace_gpu_driver(true);
   capture_options->set_max_local_marker_depth_per_command_buffer(

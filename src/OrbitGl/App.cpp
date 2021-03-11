@@ -137,6 +137,7 @@ PresetLoadState GetPresetLoadStateForProcess(
 
   return PresetLoadState::kPartiallyLoadable;
 }
+
 }  // namespace
 
 bool DoZoom = false;
@@ -277,6 +278,23 @@ void OrbitApp::OnTimer(const TimerInfo& timer_info) {
   capture_data.UpdateFunctionStats(func, elapsed_nanos);
   GetMutableTimeGraph()->ProcessTimer(timer_info, &func);
   frame_track_online_processor_.ProcessTimer(timer_info, func);
+}
+
+void OrbitApp::OnSystemMemoryUsage(
+    const orbit_grpc_protos::SystemMemoryUsage& system_memory_usage) {
+  TimerInfo timer_info;
+  timer_info.set_type(TimerInfo::kSystemMemoryUsage);
+  timer_info.set_start(system_memory_usage.timestamp_ns());
+  timer_info.set_end(system_memory_usage.timestamp_ns());
+
+  timer_info.mutable_registers()->Reserve(5);
+  timer_info.add_registers(static_cast<uint64_t>(system_memory_usage.total_kb()));
+  timer_info.add_registers(static_cast<uint64_t>(system_memory_usage.free_kb()));
+  timer_info.add_registers(static_cast<uint64_t>(system_memory_usage.available_kb()));
+  timer_info.add_registers(static_cast<uint64_t>(system_memory_usage.buffers_kb()));
+  timer_info.add_registers(static_cast<uint64_t>(system_memory_usage.cached_kb()));
+
+  GetMutableTimeGraph()->ProcessTimer(timer_info, nullptr);
 }
 
 void OrbitApp::OnKeyAndString(uint64_t key, std::string str) {

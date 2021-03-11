@@ -33,6 +33,7 @@ void GraphTrack::UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t 
   Color color = GetBackgroundColor();
   const Color kLineColor(0, 128, 255, 128);
   const Color kDotColor(0, 128, 255, 255);
+  const Color kThresholdColor(244, 67, 54, 255);
   float track_z = GlCanvas::kZValueTrack + z_offset;
   float graph_z = GlCanvas::kZValueEventBar + z_offset;
   float dot_z = GlCanvas::kZValueBox + z_offset;
@@ -78,6 +79,14 @@ void GraphTrack::UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t 
       float x0 = time_graph_->GetWorldFromTick(previous_time);
       float x1 = time_graph_->GetWorldFromTick(max_tick);
       batcher->AddLine(Vec2(x0, y1), Vec2(x1, y1), graph_z, kLineColor);
+    }
+
+	if (warning_threshold_.has_value()) {
+      double normalized_value = (warning_threshold_.value().second - min_) * inv_value_range_;
+      y1 = base_y + static_cast<float>(normalized_value) * size_[1];
+      float x0 = time_graph_->GetWorldFromTick(min_tick);
+      float x1 = time_graph_->GetWorldFromTick(max_tick);
+      batcher->AddLine(Vec2(x0, y1), Vec2(x1, y1), graph_z, kThresholdColor);
     }
   }
 }
