@@ -34,7 +34,6 @@ void GraphTrack::UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t 
   Color color = GetBackgroundColor();
   const Color kLineColor(0, 128, 255, 128);
   const Color kDotColor(0, 128, 255, 255);
-  const Color kThresholdColor(244, 67, 54, 255);
   float track_z = GlCanvas::kZValueTrack + z_offset;
   float graph_z = GlCanvas::kZValueEventBar + z_offset;
   float dot_z = GlCanvas::kZValueBox + z_offset;
@@ -81,30 +80,6 @@ void GraphTrack::UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t 
       float x1 = time_graph_->GetWorldFromTick(max_tick);
       batcher->AddLine(Vec2(x0, y1), Vec2(x1, y1), graph_z, kLineColor);
     }
-
-	// Add warning threshold text box and line.
-	if (warning_threshold_.has_value()) {
-      double normalized_value = (warning_threshold_.value().second - min_) * inv_value_range_;
-      y1 = base_y + static_cast<float>(normalized_value) * size_[1];
-
-      std::string text = absl::StrFormat("%s: %f kB", warning_threshold_.value().first,
-                                         warning_threshold_.value().second);
-      uint32_t font_size = layout_->CalculateZoomedFontSize();
-      float string_width = canvas->GetTextRenderer().GetStringWidth(text.c_str(), font_size);
-      Vec2 text_box_size(string_width, layout_->GetTextBoxHeight());
-      Vec2 text_box_position(pos_[0] + layout_->GetRightMargin(),
-                             y1 - layout_->GetTextBoxHeight() / 2.f);
-      canvas->GetTextRenderer().AddText(text.c_str(), text_box_position[0],
-                                        text_box_position[1] + layout_->GetTextOffset(), graph_z,
-                                        kThresholdColor, font_size, text_box_size[0]);
-
-	  Vec2 from(time_graph_->GetWorldFromTick(min_tick), y1);
-      Vec2 to(time_graph_->GetWorldFromTick(max_tick), y1);
-      batcher->AddLine(from, from + Vec2(layout_->GetRightMargin() / 2.f, 0), graph_z,
-                       kThresholdColor);
-      batcher->AddLine(Vec2(text_box_position[0] + text_box_size[0], y1), to, graph_z,
-                       kThresholdColor);
-    }
   }
 }
 
@@ -129,6 +104,33 @@ void GraphTrack::Draw(GlCanvas* canvas, PickingMode picking_mode, float z_offset
   const Color kWhite(255, 255, 255, 255);
   float text_z = GlCanvas::kZValueEvent + z_offset;
   DrawLabel(canvas, Vec2(point_x, point_y), std::to_string(value), kBlack, kWhite, text_z);
+
+  // Add warning threshold text box and line.
+  if (warning_threshold_.has_value()) {
+    const Color kThresholdColor(244, 67, 54, 255);
+
+    double normalized_value = (warning_threshold_.value().second - min_) * inv_value_range_;
+    float x = pos_[0];
+    float y = pos_[1] - size_[1] + static_cast<float>(normalized_value) * size_[1];
+    Vec2 from(x, y);
+    Vec2 to(x + size_[0], y);
+
+    std::string text = absl::StrFormat("%s: %f kB", warning_threshold_.value().first,
+                                       warning_threshold_.value().second);
+    uint32_t font_size = layout_->CalculateZoomedFontSize();
+    float string_width = canvas->GetTextRenderer().GetStringWidth(text.c_str(), font_size);
+    Vec2 text_box_size(string_width, layout_->GetTextBoxHeight());
+    Vec2 text_box_position(pos_[0] + layout_->GetRightMargin(),
+                           y - layout_->GetTextBoxHeight() / 2.f);
+    canvas->GetTextRenderer().AddText(text.c_str(), text_box_position[0],
+                                      text_box_position[1] + layout_->GetTextOffset(), text_z,
+                                      kThresholdColor, font_size, text_box_size[0]);
+
+    Batcher* batcher = canvas->GetBatcher();
+    batcher->AddLine(from, from + Vec2(layout_->GetRightMargin() / 2.f, 0), text_z,
+                     kThresholdColor);
+    batcher->AddLine(Vec2(text_box_position[0] + text_box_size[0], y), to, text_z, kThresholdColor);
+  }
 }
 
 void GraphTrack::DrawSquareDot(Batcher* batcher, Vec2 center, float radius, float z,
