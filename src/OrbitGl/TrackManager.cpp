@@ -35,6 +35,7 @@ using orbit_client_data::CallstackData;
 using orbit_gl::CGroupAndProcessMemoryTrack;
 using orbit_gl::MemoryTrack;
 using orbit_gl::SystemMemoryTrack;
+using orbit_gl::VariableTrack;
 
 TrackManager::TrackManager(TimeGraph* time_graph, orbit_gl::Viewport* viewport,
                            TimeGraphLayout* layout, OrbitApp* app,
