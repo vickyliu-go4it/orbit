@@ -34,6 +34,7 @@
 using orbit_client_data::CallstackData;
 using orbit_gl::CGroupAndProcessMemoryTrack;
 using orbit_gl::MemoryTrack;
+using orbit_gl::PagefaultTrack;
 using orbit_gl::SystemMemoryTrack;
 using orbit_gl::VariableTrack;
 
@@ -100,6 +101,11 @@ void TrackManager::SortTracks() {
   }
   if (cgroup_and_process_memory_track_ != nullptr && !cgroup_and_process_memory_track_->IsEmpty()) {
     all_processes_sorted_tracks.push_back(cgroup_and_process_memory_track_.get());
+  }
+
+  // Pagefault track.
+  if (pagefault_track_ != nullptr && !pagefault_track_->IsEmpty()) {
+    all_processes_sorted_tracks.push_back(pagefault_track_.get());
   }
 
   // Async tracks.
@@ -449,6 +455,7 @@ SystemMemoryTrack* TrackManager::CreateAndGetSystemMemoryTrack(
 
 CGroupAndProcessMemoryTrack* TrackManager::CreateAndGetCGroupAndProcessMemoryTrack(
     const std::array<std::string, orbit_gl::kCGroupAndProcessMemoryTrackDimension>& series_names) {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (cgroup_and_process_memory_track_ == nullptr) {
     constexpr uint8_t kTrackValueDecimalDigits = 2;
     const std::string kTrackValueLabelUnit = "MB";
@@ -464,6 +471,20 @@ CGroupAndProcessMemoryTrack* TrackManager::CreateAndGetCGroupAndProcessMemoryTra
   }
 
   return cgroup_and_process_memory_track_.get();
+}
+
+PagefaultTrack* TrackManager::CreateAndGetPagefaultTrack(
+    const std::array<std::string, 3>& series_names) {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
+  if (pagefault_track_ == nullptr) {
+    constexpr uint8_t kTrackValueDecimalDigits = 0;
+
+    pagefault_track_ = std::make_shared<PagefaultTrack>(time_graph_, time_graph_, viewport_,
+                                                        layout_, series_names, capture_data_);
+    pagefault_track_->SetNumberOfDecimalDigits(kTrackValueDecimalDigits);
+    AddTrack(pagefault_track_);
+  }
+  return pagefault_track_.get();
 }
 
 uint32_t TrackManager::GetNumTimers() const {
