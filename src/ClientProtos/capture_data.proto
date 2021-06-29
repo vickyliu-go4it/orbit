@@ -161,6 +161,8 @@ message TimerInfo {
     kApiEvent = 7;
     kSystemMemoryUsage = 8;
     kCGroupAndProcessMemoryUsage = 9;
+    kMajorPagefault = 10;
+    kMinorPagefault = 11;
   }
   Type type = 6;
 
