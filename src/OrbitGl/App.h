@@ -174,6 +174,15 @@ class OrbitApp final : public DataViewFactory,
     kProcessRssAnonKb,
     kEnd
   };
+  enum class PagefaultEncodingIndex {
+    kSystemPagefault,
+    kSystemMajorPagefault,
+    kCGroupPagefault,
+    kCGroupMajorPagefault,
+    kProcessMinorPagefault,
+    kProcessMajorPagefault,
+    kEnd
+  };
   void OnMemoryEventWrapper(
       const orbit_grpc_protos::MemoryEventWrapper& memory_event_wrapper) override;
 

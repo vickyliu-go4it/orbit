@@ -472,6 +472,41 @@ void OrbitApp::OnMemoryEventWrapper(
 
     GetMutableTimeGraph()->ProcessTimer(timer_info, nullptr);
   }
+
+  if (memory_event_wrapper.has_system_memory_usage() &&
+      memory_event_wrapper.has_cgroup_memory_usage() &&
+      memory_event_wrapper.has_process_memory_usage()) {
+    const orbit_grpc_protos::SystemMemoryUsage& system_memory_usage =
+        memory_event_wrapper.system_memory_usage();
+    const orbit_grpc_protos::CGroupMemoryUsage& cgroup_memory_usage =
+        memory_event_wrapper.cgroup_memory_usage();
+    const orbit_grpc_protos::ProcessMemoryUsage& process_memory_usage =
+        memory_event_wrapper.process_memory_usage();
+    TimerInfo timer_info;
+    timer_info.set_type(TimerInfo::kPagefault);
+    timer_info.set_start(memory_event_wrapper.timestamp_ns());
+    timer_info.set_end(memory_event_wrapper.timestamp_ns());
+    timer_info.set_process_id(process_memory_usage.pid());
+    timer_info.set_cgroup_name(cgroup_memory_usage.cgroup_name());
+
+    std::vector<uint64_t> encoded_values(static_cast<size_t>(PagefaultEncodingIndex::kEnd));
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kSystemPagefault)] =
+        orbit_api::Encode<uint64_t>(system_memory_usage.pgfault());
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kSystemMajorPagefault)] =
+        orbit_api::Encode<uint64_t>(system_memory_usage.pgmajfault());
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kCGroupPagefault)] =
+        orbit_api::Encode<uint64_t>(cgroup_memory_usage.pgfault());
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kCGroupMajorPagefault)] =
+        orbit_api::Encode<uint64_t>(cgroup_memory_usage.pgmajfault());
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kProcessMinorPagefault)] =
+        orbit_api::Encode<uint64_t>(process_memory_usage.minflt());
+    encoded_values[static_cast<size_t>(PagefaultEncodingIndex::kProcessMajorPagefault)] =
+        orbit_api::Encode<uint64_t>(process_memory_usage.majflt());
+
+    *timer_info.mutable_registers() = {encoded_values.begin(), encoded_values.end()};
+
+    GetMutableTimeGraph()->ProcessTimer(timer_info, nullptr);
+  }
 }
 
 void OrbitApp::OnKeyAndString(uint64_t key, std::string str) {
