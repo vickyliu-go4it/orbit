@@ -28,7 +28,7 @@ void BasicPagefaultTrack::AddValuesAndUpdateAnnotations(uint64_t timestamp_ns,
                      GetGraphMinValue());
 }
 
-bool BasicPagefaultTrack::IsCollapsed() const {
+bool BasicPagefaultTrack::ShouldBeCollapsed() const {
   return collapse_toggle_->IsCollapsed() || GetParent()->IsCollapsed();
 }
 
@@ -37,7 +37,7 @@ void BasicPagefaultTrack::Draw(Batcher& batcher, TextRenderer& text_renderer,
                                float z_offset) {
   LineGraphTrack<3>::Draw(batcher, text_renderer, current_mouse_time_ns, picking_mode, z_offset);
 
-  if (picking_mode != PickingMode::kNone || this->IsCollapsed()) return;
+  if (picking_mode != PickingMode::kNone || ShouldBeCollapsed()) return;
   AnnotationTrack::DrawAnnotation(batcher, text_renderer, this->layout_,
                                   GlCanvas::kZValueTrackText + z_offset);
 }

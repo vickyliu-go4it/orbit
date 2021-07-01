@@ -47,7 +47,7 @@ class BasicPagefaultTrack final : public LineGraphTrack<3>, public AnnotationTra
                              const std::array<float, 3>& next_normalized_values, float z) override;
 
  private:
-  [[nodiscard]] bool IsCollapsed() const override;
+  [[nodiscard]] bool ShouldBeCollapsed() const override;
   [[nodiscard]] float GetAnnotatedTrackContentHeight() const override {
     return this->size_[1] - this->layout_->GetTrackTabHeight() -
            this->layout_->GetTrackBottomMargin() - this->GetLegendHeight();

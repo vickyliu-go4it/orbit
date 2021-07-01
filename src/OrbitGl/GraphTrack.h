@@ -83,6 +83,7 @@ class GraphTrack : public Track {
  private:
   void DrawSingleSeriesEntry(Batcher* batcher, uint64_t start_tick, uint64_t end_tick,
                              const std::array<float, Dimension>& normalized_values, float z);
+  [[nodiscard]] virtual bool ShouldBeCollapsed() const { return collapse_toggle_->IsCollapsed(); }
 
   std::optional<std::array<Color, Dimension>> series_colors_;
 };
